@@ -8,14 +8,23 @@ import android.support.design.widget.CoordinatorLayout
 import android.support.v7.widget.AppCompatImageView
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import io.paulcadman.zecamp.containers.Loadable
 import io.paulcadman.zecamp.extensions.latestPair
+import io.paulcadman.zecamp.ui.ScheduleScreen
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposable
 
 class MainActivity : AppCompatActivity() {
+    private var disposable: Disposable? = null
 
     fun setUp(model: AppModel) {
-        val rootScreen = model.schedule.map { scheduleLoadable ->
-            AppLoadingScreen()
-        }
+        val rootScreen = model.schedule.map { schedule ->
+            when (schedule) {
+                is Loadable.Loading -> AppLoadingScreen()
+                is Loadable.Loaded -> ScheduleScreen(schedule.result)
+                is Loadable.Error -> AppLoadingScreen()
+            }
+        }.observeOn(AndroidSchedulers.mainThread())
 
         val context = this.applicationContext
         val root = CoordinatorLayout(this)
@@ -27,13 +36,18 @@ class MainActivity : AppCompatActivity() {
         root.addView(backgroundView, CoordinatorLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
         root.addView(container, CoordinatorLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
 
-        rootScreen.map { it.createView(context)}.latestPair().subscribe { view ->
+        disposable = rootScreen.map { it.createView(context)}.latestPair().subscribe { view ->
             view.old?.let {
                 container.removeView(it)
             }
-
             container.addView(view.new, CoordinatorLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
         }
+
         setContentView(root)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        disposable?.dispose()
     }
 }

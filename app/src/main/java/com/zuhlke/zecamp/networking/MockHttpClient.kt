@@ -7,11 +7,7 @@ import okhttp3.*
 
 class MockHttpClient: HttpClient {
     override fun fetch(request: Request): Observable<Response> {
-        val events = listOf<EventModel>(
-                EventModel("First"),
-                EventModel("Second"),
-                EventModel("Third")
-                )
+        val events = IntRange(1, 10000).map { EventModel("Hello") }
 
         val responseBody = ResponseBody.create(MediaType.parse("application/json"), jacksonObjectMapper().writeValueAsString(events))
         return Observable.just(Response.Builder()

@@ -4,8 +4,7 @@ import android.app.Activity
 import android.app.Application
 import android.os.Bundle
 import io.paulcadman.zecamp.model.AppModel
-import io.paulcadman.zecamp.networking.OKHttpClientFetcher
-import okhttp3.OkHttpClient
+import io.paulcadman.zecamp.networking.MockHttpClient
 
 class ZeCampApplication: Application() {
     override fun onCreate() {
@@ -13,7 +12,7 @@ class ZeCampApplication: Application() {
 
         registerActivityLifecycleCallbacks(ActivityCreationHandler { activity ->
             if (activity is MainActivity) {
-                val httpClient = OKHttpClientFetcher(OkHttpClient())
+                val httpClient = MockHttpClient()
                 val model = AppModel(httpClient)
                 activity.setUp(model)
             }
